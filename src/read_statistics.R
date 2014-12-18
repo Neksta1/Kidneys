@@ -33,7 +33,7 @@ read_statistics <- function (datalist, type, timepoint) {
 	side <- character(length = length(patients))
 	side[which(sicklist[,2] == 6)] <- "R"
 	side[which(sicklist[,2] == 7)] <- "L"	
-	filelist <- paste("./data",patients, "/",timepoint,"/Export/Kidney",side,"_cortex_statistics.csv", sep="")
+	filelist <- paste("./data/patients/",patients, "/",timepoint,"/Export/Kidney",side,"_cortex_statistics.csv", sep="")
 	statistics <- lapply(filelist, read.csv2, header = TRUE, na.strings = c("NaN","#NAME?"), stringsAsFactors = FALSE)	
 	statistics <- lapply(statistics, function(x) x[,1:10])
 	names(statistics) <- (patients) 

@@ -33,7 +33,7 @@ read_voxelvalues <- function (datalist, type, timepoint) {
 	side <- character(length = length(patients))
 	side[which(sicklist[,2] == 6)] <- "R"
 	side[which(sicklist[,2] == 7)] <- "L"	
-	filelist <- paste("./data",patients, "/",timepoint,"/Export/Kidney",side,"_cortex_roivalues.csv", sep="")
+	filelist <- paste("./data/patients/",patients, "/",timepoint,"/Export/Kidney",side,"_cortex_roivalues.csv", sep="")
 	voxelvalues <- lapply(filelist, read.csv2, header = TRUE, na.strings = c("NaN","#NAME?"), stringsAsFactors = FALSE)
 	voxelvalues <- lapply(voxelvalues, function(x) x[,1:10])
 	voxelvalues <- lapply(voxelvalues, function(x) x[complete.cases(x),])
