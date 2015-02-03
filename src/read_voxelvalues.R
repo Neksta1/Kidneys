@@ -33,11 +33,21 @@ read_voxelvalues <- function (datalist, type, timepoint) {
 	side <- character(length = length(patients))
 	side[which(sicklist[,2] == 6)] <- "R"
 	side[which(sicklist[,2] == 7)] <- "L"	
-	filelist <- paste("./data/patients/",patients, "/",timepoint,"/Export/Kidney",side,"_cortex_roivalues.csv", sep="")
-	voxelvalues <- lapply(filelist, read.csv2, header = TRUE, na.strings = c("NaN","#NAME?"), stringsAsFactors = FALSE)
+	filelist <- paste("./data/patients/",patients, "/",timepoint,
+                          "/Export/Kidney",side,"_cortex_roivalues.csv", sep="")
+	voxelvalues <- lapply(filelist, read.csv2, header = TRUE, na.strings = c("NaN","#NAME?"),
+                              stringsAsFactors = FALSE, dec=".")
 	voxelvalues <- lapply(voxelvalues, function(x) x[,1:10])
-	voxelvalues <- lapply(voxelvalues, function(x) x[complete.cases(x),])
+	
+
+        filelist <- paste("./data/patients/",patients, "/",timepoint,
+                          "/Export/Kidney",side,"_DDs_corrected_denoise[FA]_Kidney",side,"_cortex_roivalues.csv", sep="")
+        FAvalues <- lapply(filelist, read.csv2, header = FALSE, na.strings = c("NaN","#NAME?"),
+                           stringsAsFactors = FALSE, dec=".")
+        FAvalues <- lapply(FAvalues, function(x) x[,1])
+        voxelvalues <- Reduce(function(x,y) Map(cbind, x, FA = y),list(voxelvalues, FAvalues))
 #        voxelvalues <- lapply(voxelvalues, data.table)
+        voxelvalues <- lapply(voxelvalues, function(x) x[complete.cases(x),])
 	names(voxelvalues) <- (patients) 
 	voxelvalues
 	#voxelvalues	<- lapply(voxelvalues[complete.cases(voxelvalues)]	

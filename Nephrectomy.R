@@ -94,7 +94,14 @@ medianK_s <- get_median(sapply(voxelvalues_s_1, function(x) x[,9]),
                         sapply(voxelvalues_s_3, function(x) x[,9]))
 deltaK_s <- get_delta(medianK_s)
 
-
+medianFA_h <- get_median(sapply(voxelvalues_h_1, function(x) x[,11]),
+                        sapply(voxelvalues_h_2, function(x) x[,11]),
+                        sapply(voxelvalues_h_3, function(x) x[,11]))
+deltaFA_h <- get_delta(medianFA_h)
+medianFA_s <- get_median(sapply(voxelvalues_s_1, function(x) x[,11]),
+                        sapply(voxelvalues_s_2, function(x) x[,11]),
+                        sapply(voxelvalues_s_3, function(x) x[,11]))
+deltaFA_s <- get_delta(medianFA_s)
 
 histvsfit_h_1 <- (medianADC_h[[1]] - as.numeric(sapply(fitvalues_h_1, function(x) x[,1])))/medianADC_h[[1]]
 
@@ -117,6 +124,10 @@ boxplot(medianf_h[[1]], medianf_h[[2]],
         pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
 boxplot(medianK_h[[1]], medianK_h[[2]], 
         main = paste("Kurtosis, p-value=", wilcox.test(medianK_h[[1]], medianK_h[[2]], paired=TRUE)[3]),
+        names = c("Exam1", "Exam2"),
+        pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
+boxplot(medianFA_h[[1]], medianFA_h[[2]], 
+        main = paste("FA, p-value=", wilcox.test(medianFA_h[[1]], medianFA_h[[2]], paired=TRUE)[3]),
         names = c("Exam1", "Exam2"),
         pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
 dev.off()
@@ -142,6 +153,10 @@ boxplot(medianK_s[[1]], medianK_s[[2]],
         main = paste("Kurtosis, p-value=", wilcox.test(medianK_s[[1]], medianK_s[[2]], paired=TRUE)[3]),
         names = c("Exam1", "Exam2"),
         pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
+boxplot(medianFA_s[[1]], medianFA_s[[2]], 
+        main = paste("FA, p-value=", wilcox.test(medianFA_s[[1]], medianFA_s[[2]], paired=TRUE)[3]),
+        names = c("Exam1", "Exam2"),
+        pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
 dev.off()
 
 pdf("./graphs/HvsS_delta.pdf")
@@ -155,6 +170,8 @@ boxplot(deltaf_h[[1]], deltaf_s[[1]],
         main = paste("f, p-value=", wilcox.test(deltaf_h[[1]], deltaf_s[[1]], paired=FALSE)[3]))
 boxplot(deltaK_h[[1]], deltaK_s[[1]], 
         main = paste("Kurtosis, p-value=", wilcox.test(deltaK_h[[1]], deltaK_s[[1]], paired=FALSE)[3]))
+boxplot(deltaFA_h[[1]], deltaFA_s[[1]], 
+        main = paste("FA, p-value=", wilcox.test(deltaFA_h[[1]], deltaFA_s[[1]], paired=FALSE)[3]))
 dev.off()
 
 pdf("./graphs/Healthy_vs_Sick_Exam1.pdf")
@@ -178,6 +195,10 @@ boxplot(medianK_h[[1]], medianK_s[[1]],
         main = paste("Kurtosis, p-value=", wilcox.test(medianK_h[[1]], medianK_s[[1]], paired=FALSE)[3]),
         names = c("Healthy", "Sick"),
         pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
+boxplot(medianFA_h[[1]], medianFA_s[[1]], 
+        main = paste("FA, p-value=", wilcox.test(medianFA_h[[1]], medianFA_s[[1]], paired=FALSE)[3]),
+        names = c("Healthy", "Sick"),
+        pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
 dev.off()
 
 pdf("./graphs/Healthy_vs_Sick_Exam2.pdf")
@@ -199,6 +220,10 @@ boxplot(medianf_h[[2]], medianf_s[[2]],
         pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
 boxplot(medianK_h[[2]], medianK_s[[2]], 
         main = paste("Kurtosis, p-value=", wilcox.test(medianK_h[[2]], medianK_s[[2]], paired=FALSE)[3]),
+        names = c("Healthy", "Sick"),
+        pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
+boxplot(medianFA_h[[2]], medianFA_s[[2]], 
+        main = paste("FA, p-value=", wilcox.test(medianFA_h[[2]], medianFA_s[[2]], paired=FALSE)[3]),
         names = c("Healthy", "Sick"),
         pars = list(boxwex = 0.8, boxlwd = 2, medlwd = 4, whisklwd = 2, staplelwd = 2, outlwd = 2))
 dev.off()
