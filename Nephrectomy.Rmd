@@ -1,0 +1,685 @@
+---
+title: "Diffusion-weighted magnetic resonance imaging in partially nephrectomized kidneys"
+author: "Moritz Schneider"
+date: "Tuesday, February 03, 2015"
+geometry: margin=2cm
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyhead[CO,CE]{DWI in partially nephrectomized kidneys}
+output: 
+        pdf_document:
+                fig_caption: yes
+---
+```{r, loadlibraries, echo=FALSE, message=FALSE}
+library("ggplot2")
+library(knitr)
+library(reshape)
+library(stargazer)
+library(corrplot)
+```
+
+
+
+```{r, dataimport, echo=FALSE}
+datalist_directory <- "./data"
+datalist_file <- "Data_list.csv" #import raw data
+
+# load sources
+source("./src/read_datalist.R")
+source("./src/read_fitvalues.R")
+source("./src/read_statistics.R")
+source("./src/read_voxelvalues.R")
+source("./src/get_median.R")
+source("./src/get_delta.R")
+source("./src/get_fits.R")
+source("./src/get_paramindex.R")
+
+#Read Data
+datalist <- read_datalist(datalist_directory, datalist_file)
+
+voxelvalues_h_1 <- read_voxelvalues(datalist, "h", 1)
+voxelvalues_h_2 <- read_voxelvalues(datalist, "h", 2)
+voxelvalues_h_3 <- read_voxelvalues(datalist, "h", 3)
+voxelvalues_s_1 <- read_voxelvalues(datalist, "s", 1)
+voxelvalues_s_2 <- read_voxelvalues(datalist, "s", 2)
+voxelvalues_s_3 <- read_voxelvalues(datalist, "s", 3)
+
+
+medianADC_h <- get_median(sapply(voxelvalues_h_1, function(x) x[,1]),
+                          sapply(voxelvalues_h_2, function(x) x[,1]),
+                          sapply(voxelvalues_h_3, function(x) x[,1]))
+deltaADC_h <- get_delta(medianADC_h)
+medianADC_s <- get_median(sapply(voxelvalues_s_1, function(x) x[,1]),
+                          sapply(voxelvalues_s_2, function(x) x[,1]),
+                          sapply(voxelvalues_s_3, function(x) x[,1]))
+deltaADC_s <- get_delta(medianADC_s)
+
+medianDA_h <- get_median(sapply(voxelvalues_h_1, function(x) x[,3]),
+                         sapply(voxelvalues_h_2, function(x) x[,3]),
+                         sapply(voxelvalues_h_3, function(x) x[,3]))
+deltaDA_h <- get_delta(medianDA_h)
+medianDA_s <- get_median(sapply(voxelvalues_s_1, function(x) x[,3]),
+                         sapply(voxelvalues_s_2, function(x) x[,3]),
+                         sapply(voxelvalues_s_3, function(x) x[,3]))
+deltaDA_s <- get_delta(medianDA_s)
+
+medianDB_h <- get_median(sapply(voxelvalues_h_1, function(x) x[,4]),
+                         sapply(voxelvalues_h_2, function(x) x[,4]),
+                         sapply(voxelvalues_h_3, function(x) x[,4]))
+deltaDB_h <- get_delta(medianDB_h)
+medianDB_s <- get_median(sapply(voxelvalues_s_1, function(x) x[,4]),
+                         sapply(voxelvalues_s_2, function(x) x[,4]),
+                         sapply(voxelvalues_s_3, function(x) x[,4]))
+deltaDB_s <- get_delta(medianDB_s)
+
+medianf_h <- get_median(sapply(voxelvalues_h_1, function(x) x[,5]),
+                        sapply(voxelvalues_h_2, function(x) x[,5]),
+                        sapply(voxelvalues_h_3, function(x) x[,5]))
+deltaf_h <- get_delta(medianf_h)
+medianf_s <- get_median(sapply(voxelvalues_s_1, function(x) x[,5]),
+                        sapply(voxelvalues_s_2, function(x) x[,5]),
+                        sapply(voxelvalues_s_3, function(x) x[,5]))
+deltaf_s <- get_delta(medianf_s)
+
+medianK_h <- get_median(sapply(voxelvalues_h_1, function(x) x[,9]),
+                        sapply(voxelvalues_h_2, function(x) x[,9]),
+                        sapply(voxelvalues_h_3, function(x) x[,9]))
+deltaK_h <- get_delta(medianK_h)
+medianK_s <- get_median(sapply(voxelvalues_s_1, function(x) x[,9]),
+                        sapply(voxelvalues_s_2, function(x) x[,9]),
+                        sapply(voxelvalues_s_3, function(x) x[,9]))
+deltaK_s <- get_delta(medianK_s)
+
+medianFA_h <- get_median(sapply(voxelvalues_h_1, function(x) x[,11]),
+                        sapply(voxelvalues_h_2, function(x) x[,11]),
+                        sapply(voxelvalues_h_3, function(x) x[,11]))
+deltaFA_h <- get_delta(medianFA_h)
+medianFA_s <- get_median(sapply(voxelvalues_s_1, function(x) x[,11]),
+                        sapply(voxelvalues_s_2, function(x) x[,11]),
+                        sapply(voxelvalues_s_3, function(x) x[,11]))
+deltaFA_s <- get_delta(medianFA_s)
+```
+
+
+```{r, params, echo = FALSE, message=FALSE}
+meanADCh <- c(mean(medianADC_h[[1]]),
+              mean(medianADC_h[[2]]),
+              mean(medianADC_h[[3]]))
+meanADCs <- c(mean(medianADC_s[[1]]),
+              mean(medianADC_s[[2]]),
+              mean(medianADC_s[[3]]))
+ADChtest <- c(wilcox.test(medianADC_h[[1]], medianADC_h[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianADC_h[[2]][1:7], medianADC_h[[3]], paired = TRUE)[[3]])
+ADCstest <- c(wilcox.test(medianADC_s[[1]], medianADC_s[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianADC_s[[2]][1:7], medianADC_s[[3]], paired = TRUE)[[3]])
+ADCvstest <- c(wilcox.test(medianADC_h[[1]], medianADC_s[[1]], paired=FALSE)[[3]],
+               wilcox.test(medianADC_h[[2]], medianADC_s[[2]], paired=FALSE)[[3]],
+               wilcox.test(medianADC_h[[3]], medianADC_s[[3]], paired=FALSE)[[3]])
+
+meanDAh <- c(mean(medianDA_h[[1]]),
+              mean(medianDA_h[[2]]),
+              mean(medianDA_h[[3]]))
+meanDAs <- c(mean(medianDA_s[[1]]),
+              mean(medianDA_s[[2]]),
+              mean(medianDA_s[[3]]))
+DAhtest <- c(wilcox.test(medianDA_h[[1]], medianDA_h[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianDA_h[[2]][1:7], medianDA_h[[3]], paired = TRUE)[[3]])
+DAstest <- c(wilcox.test(medianDA_s[[1]], medianDA_s[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianDA_s[[2]][1:7], medianDA_s[[3]], paired = TRUE)[[3]])
+DAvstest <- c(wilcox.test(medianDA_h[[1]], medianDA_s[[1]], paired=FALSE)[[3]],
+               wilcox.test(medianDA_h[[2]], medianDA_s[[2]], paired=FALSE)[[3]],
+               wilcox.test(medianDA_h[[3]], medianDA_s[[3]], paired=FALSE)[[3]])
+
+meanDBh <- c(mean(medianDB_h[[1]]),
+              mean(medianDB_h[[2]]),
+              mean(medianDB_h[[3]]))
+meanDBs <- c(mean(medianDB_s[[1]]),
+              mean(medianDB_s[[2]]),
+              mean(medianDB_s[[3]]))
+DBhtest <- c(wilcox.test(medianDB_h[[1]], medianDB_h[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianDB_h[[2]][1:7], medianDB_h[[3]], paired = TRUE)[[3]])
+DBstest <- c(wilcox.test(medianDB_s[[1]], medianDB_s[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianDB_s[[2]][1:7], medianDB_s[[3]], paired = TRUE)[[3]])
+DBvstest <- c(wilcox.test(medianDB_h[[1]], medianDB_s[[1]], paired=FALSE)[[3]],
+               wilcox.test(medianDB_h[[2]], medianDB_s[[2]], paired=FALSE)[[3]],
+               wilcox.test(medianDB_h[[3]], medianDB_s[[3]], paired=FALSE)[[3]])
+
+meanfh <- c(mean(medianf_h[[1]]),
+              mean(medianf_h[[2]]),
+              mean(medianf_h[[3]]))
+meanfs <- c(mean(medianf_s[[1]]),
+              mean(medianf_s[[2]]),
+              mean(medianf_s[[3]]))
+fhtest <- c(wilcox.test(medianf_h[[1]], medianf_h[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianf_h[[2]][1:7], medianf_h[[3]], paired = TRUE)[[3]])
+fstest <- c(wilcox.test(medianf_s[[1]], medianf_s[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianf_s[[2]][1:7], medianf_s[[3]], paired = TRUE)[[3]])
+fvstest <- c(wilcox.test(medianf_h[[1]], medianf_s[[1]], paired=FALSE)[[3]],
+               wilcox.test(medianf_h[[2]], medianf_s[[2]], paired=FALSE)[[3]],
+               wilcox.test(medianf_h[[3]], medianf_s[[3]], paired=FALSE)[[3]])
+
+meanKh <- c(mean(medianK_h[[1]]),
+              mean(medianK_h[[2]]),
+              mean(medianK_h[[3]]))
+meanKs <- c(mean(medianK_s[[1]]),
+              mean(medianK_s[[2]]),
+              mean(medianK_s[[3]]))
+Khtest <- c(wilcox.test(medianK_h[[1]], medianK_h[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianK_h[[2]][1:7], medianK_h[[3]], paired = TRUE)[[3]])
+Kstest <- c(wilcox.test(medianK_s[[1]], medianK_s[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianK_s[[2]][1:7], medianK_s[[3]], paired = TRUE)[[3]])
+Kvstest <- c(wilcox.test(medianK_h[[1]], medianK_s[[1]], paired=FALSE)[[3]],
+               wilcox.test(medianK_h[[2]], medianK_s[[2]], paired=FALSE)[[3]],
+               wilcox.test(medianK_h[[3]], medianK_s[[3]], paired=FALSE)[[3]])
+
+meanFAh <- c(mean(medianFA_h[[1]]),
+              mean(medianFA_h[[2]]),
+              mean(medianFA_h[[3]]))
+meanFAs <- c(mean(medianFA_s[[1]]),
+              mean(medianFA_s[[2]]),
+              mean(medianFA_s[[3]]))
+FAhtest <- c(wilcox.test(medianFA_h[[1]], medianFA_h[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianFA_h[[2]][1:7], medianFA_h[[3]], paired = TRUE)[[3]])
+FAstest <- c(wilcox.test(medianFA_s[[1]], medianFA_s[[2]], paired = TRUE)[[3]],
+              wilcox.test(medianFA_s[[2]][1:7], medianFA_s[[3]], paired = TRUE)[[3]])
+FAvstest <- c(wilcox.test(medianFA_h[[1]], medianFA_s[[1]], paired=FALSE)[[3]],
+               wilcox.test(medianFA_h[[2]], medianFA_s[[2]], paired=FALSE)[[3]],
+               wilcox.test(medianFA_h[[3]], medianFA_s[[3]], paired=FALSE)[[3]])
+
+median.table.h <- melt(datalist[, c(1, 3, 4, 5)])[, c(1,3)]
+median.table.h <- median.table.h[which(median.table.h[,1]!="Schmidt" & median.table.h[,2] != 0),]
+median.table.h <- cbind(median.table.h,
+                        c(medianADC_h[[1]], medianADC_h[[2]], medianADC_h[[3]]),
+                        c(medianDA_h[[1]], medianDA_h[[2]], medianDA_h[[3]]),
+                        c(medianDB_h[[1]], medianDB_h[[2]], medianDB_h[[3]]),
+                        c(medianf_h[[1]], medianf_h[[2]], medianf_h[[3]]),
+                        c(medianK_h[[1]], medianK_h[[2]], medianK_h[[3]]),
+                        c(medianFA_h[[1]], medianFA_h[[2]], medianFA_h[[3]]))
+names(median.table.h) <- c("Patient", "Measurement", "ADC", "Da", "Db", "f", "K", "FA")
+median.table.h <- cbind(median.table.h, Condition = replicate(nrow(median.table.h), "non-nephrectomized"))
+
+median.table.s <- melt(datalist[, c(1, 3, 4, 5)])[, c(1,3)]
+median.table.s <- median.table.s[which(median.table.s[,2] != 0),]
+median.table.s <- cbind(median.table.s,
+                        c(medianADC_s[[1]], medianADC_s[[2]], medianADC_s[[3]]),
+                        c(medianDA_s[[1]], medianDA_s[[2]], medianDA_s[[3]]),
+                        c(medianDB_s[[1]], medianDB_s[[2]], medianDB_s[[3]]),
+                        c(medianf_s[[1]], medianf_s[[2]], medianf_s[[3]]),
+                        c(medianK_s[[1]], medianK_s[[2]], medianK_s[[3]]),
+                        c(medianFA_s[[1]], medianFA_s[[2]], medianFA_s[[3]]))
+names(median.table.s) <- c("Patient", "Measurement", "ADC", "Da", "Db", "f", "K", "FA")
+median.table.s <- cbind(median.table.s, Condition = replicate(nrow(median.table.s), "nephrectomized"))
+
+median.table <- rbind(median.table.h, median.table.s)
+
+cormat <- cbind(Kzeit = datalist$Klemmzeit,
+                D.ADC = deltaADC_s[[1]], 
+                D.DA = deltaDA_s[[1]], 
+                D.DB = deltaDB_s[[1]], 
+                D.f = deltaf_s[[1]], 
+                D.K = deltaK_s[[1]], 
+                D.FA = deltaFA_s[[1]])
+
+cor.mtest <- function(cormat, conf.level = 0.95) {
+    mat <- as.matrix(cormat)
+    n <- ncol(mat)
+    p.mat <- lowCI.mat <- uppCI.mat <- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    diag(lowCI.mat) <- diag(uppCI.mat) <- 1
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], conf.level = conf.level)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+            lowCI.mat[i, j] <- lowCI.mat[j, i] <- tmp$conf.int[1]
+            uppCI.mat[i, j] <- uppCI.mat[j, i] <- tmp$conf.int[2]
+        }
+    }
+    return(list(p.mat, lowCI.mat, uppCI.mat))
+}
+res1 <- cor.mtest(cormat, 0.95)
+res2 <- cor.mtest(cormat, 0.99)
+
+```
+
+#Materials and Methods
+
+##Overview of available Data
+
+
+```{r, overview, echo=FALSE, results='asis'}
+stargazer(datalist[,c(1:2,6:8)], summary=F, header=F, rownames = F,
+          title="Data overview")
+```
+h = healthy, s = sick
+
+\newpage
+
+##Quantification Method
+
+###Fractional Anisotropy
+
+The pattern used for the diffusion gradient directions (passing through the vertices of a regular 14-sided polygon) allowed for a simplified calculation of the diffusion tensor as described by Basser et al.(1998). Prior to calculation the diffusion tensor elements, the DWI images were rigidly registered along the b-value dimension using a Fourier cross-correlation method to limit the effect of bulk-motion. Subsequently, images with matching diffusion gradients (number of averages = 2) were averaged and afterwards images were registered once more before calculating the tensor elements and the fractional anisotropy ($FA$): 
+
+$\text{FA} = \sqrt{\frac{1}{2}} \frac{\sqrt{(\lambda_1 - \lambda_2)^2 + (\lambda_2 - \lambda_3)^2 + (\lambda_3 - \lambda_1)^2}}{\sqrt{\lambda_1^2 + \lambda_2^2 + \lambda_3^2}}$ , with the tensor eigenvalues $\lambda_1, \lambda_2, \lambda_3$.
+
+The median value inside multi-slice (min. 3 slices) regions of interest encompassing the kidney cortex was then used as representative value for the fractional anisotropy. 
+
+###ADC, IVIM and Kurtosis
+Trace-weighted images for each b-value were calculated using the registered DWI images and afterwards registered once more before using a monoexponential model $S(b) = S_0 \cdot e^{(─b \cdot ADC)}$ fit to calculate $ADCs$ and a segmented biexponential fitting approach[2] to calculate voxelwise IVIM parameters $S(b) = S_0 \cdot (f \cdot e^{(─ b \cdot (D_{slow} + D_{fast}))} + (1 ─ f) \cdot e^{(─ b \cdot D_{slow})})$; with tissue diffusion $D_{slow}$, perfusion induced pseudodiffusion $D_{fast}$ and the perfusion fraction $f$, representing the proportion of the initial signal intensity $S_0$ attributed to blood). The kurtosis paramter $K$ was estimated by fitting the Signal intensities to the kurtosis model : $S(b) = S_0 \cdot e^{(─b \cdot D_{k} + K/6 \cdot (b \cdot D_{K})^{2})}$. Analogous to the fractional anisotropy, median value inside multi-slice (min. 3 slices) regions of interest encompassing the kidney cortex was then used as representative value for each parameter, respectively. 
+
+###Statistical Analyses
+
+To compare parameters between baseline and follow-up measurement the paired Wilcoxon signed-rank test was used, to compare non-nephrectomized and partially nephrectomized kidneys the non-paired Mann-Whitney U test was used. P-values of less than 0.05 were considered statistically significant.
+
+Linear correlations were calculated between $ADC$, $f$, $FA$ and $Klemmzeit$. 
+
+\newpage
+
+#Results
+
+##Parameter Values
+
+###ADC
+
+Median ADC values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanADCh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanADCh[2], 3)` \frac{mm^2}{10^3s}$ ($p=`r signif(ADChtest[1], 2)`$) and a subsequent decrease to $`r signif(meanADCh[3], 3)` \frac{mm^2}{10^3s}$ ($p=`r signif(ADChtest[2], 2)`$).
+
+```{r, adch, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
+ADC3h <- medianADC_h[[3]]
+length(ADC3h) <- length(medianADC_h[[2]])
+tableADCh <- data.frame(Patient = names(medianADC_h[[1]]),
+               Pre.OP = as.numeric(medianADC_h[[1]]),
+               Delta.1 = medianADC_h[[2]]-medianADC_h[[1]],
+               Post.1 = medianADC_h[[2]],
+               Delta.2 = ADC3h-medianADC_h[[2]],
+               Post.2 = ADC3h)
+stargazer(tableADCh, type="latex", summary = F, header = F, rownames=F,
+          title="ADC values in non-nephrectomized kidneys")
+# ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 3])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("ADC [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median ADC non-nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+
+```
+
+Median ADC values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanADCs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanADCs[2], 3)` \frac{mm^2}{10^3s}$ ($p=`r signif(ADCstest[1], 2)`$) and subsequently remained constant ($`r signif(meanADCs[3], 3)` \frac{mm^2}{10^3s}$; $p=`r signif(ADCstest[2], 2)`$).
+
+```{r, adcs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+ADC3s <- medianADC_s[[3]]
+length(ADC3s) <- length(medianADC_s[[2]])
+tableADCs <- data.frame(Patient = names(medianADC_s[[1]]),
+               Pre.OP = as.numeric(medianADC_s[[1]]),
+               Delta.1 = medianADC_s[[2]]-medianADC_s[[1]],
+               Post.1 = medianADC_s[[2]],
+               Delta.2 = ADC3s-medianADC_s[[2]],
+               Post.2 = ADC3s)
+stargazer(tableADCs, type="latex", summary = F, header = F, rownames = F,
+          title="ADC values in nephrectomized kidneys")
+
+# ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 3])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("ADC [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median ADC nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+While the comparison of ADC values between nephrectomized and non-nephrectomized kidneys revealed no significant difference for the baseline measurement ($p = `r signif(ADCvstest[[1]], 2)`$), second and third measurements showed significantly higher median ADC in non-nephrectomized kidneys ($p = `r signif(ADCvstest[[2]], 2)`$ and $p = `r signif(ADCvstest[[2]], 2)`$).
+
+```{r, adcvs, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=6, fig.width=8}
+ggplot(median.table, aes(factor(Measurement), median.table[, 3])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("ADC [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median ADC") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table[,1])))))+
+                facet_grid(. ~ Condition)
+```
+
+\newpage
+
+###DA
+
+Mean DA values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanDAh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDAh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAhtest[1], 2)`) and a subsequent decrease to $`r signif(meanDAh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAhtest[2], 2)`).
+
+```{r, DAh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
+DA3h <- medianDA_h[[3]]
+length(DA3h) <- length(medianDA_h[[2]])
+tableDAh <- data.frame(Patient = names(medianDA_h[[1]]),
+               Pre.OP = as.numeric(medianDA_h[[1]]),
+               Delta.1 = medianDA_h[[2]]-medianDA_h[[1]],
+               Post.1 = medianDA_h[[2]],
+               Delta.2 = DA3h-medianDA_h[[2]],
+               Post.2 = DA3h)
+stargazer(tableDAh, type="latex", summary = F, header = F, rownames = F,
+          title="DA values in non-nephrectomized kidneys")
+ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 4])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("DA [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median DA non-nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+
+```
+
+\newpage
+
+Mean DA values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanDAs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDAs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAstest[1], 2)`) and a further subsequent decrease to $`r signif(meanDAs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAstest[2], 2)`).
+
+```{r, DAs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+DA3s <- medianDA_s[[3]]
+length(DA3s) <- length(medianDA_s[[2]])
+tableDAs <- data.frame(Patient = names(medianDA_s[[1]]),
+               Pre.OP = as.numeric(medianDA_s[[1]]),
+               Delta.1 = medianDA_s[[2]]-medianDA_s[[1]],
+               Post.1 = medianDA_s[[2]],
+               Delta.2 = DA3s-medianDA_s[[2]],
+               Post.2 = DA3s)
+stargazer(tableDAs, type="latex", summary = F, header = F, rownames = F,
+          title="DA values in nephrectomized kidneys")
+
+ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 4])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("DA [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median DA nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+###DB
+
+Mean DB values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanDBh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDBh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DBhtest[1], 2)`) and subsequently remained constant ($`r signif(meanDBh[3], 3)` \frac{mm^2}{10^3s}$; p=`r signif(DBhtest[2], 2)`).
+
+```{r, DBh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
+DB3h <- medianDB_h[[3]]
+length(DB3h) <- length(medianDB_h[[2]])
+tableDBh <- data.frame(Patient = names(medianDB_h[[1]]),
+               Pre.OP = as.numeric(medianDB_h[[1]]),
+               Delta.1 = medianDB_h[[2]]-medianDB_h[[1]],
+               Post.1 = medianDB_h[[2]],
+               Delta.2 = DB3h-medianDB_h[[2]],
+               Post.2 = DB3h)
+stargazer(tableDBh, type="latex", summary = F, header = F, rownames=F,
+          title="DB values in non-nephrectomized kidneys")
+ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 5])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("DB [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median DB non-nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+
+```
+
+\newpage
+
+Mean DB values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanDBs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDBs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DBstest[1], 2)`) and subsequently remained constant ($`r signif(meanDBs[3], 3)` \frac{mm^2}{10^3s}$; p=`r signif(DBstest[2], 2)`).
+
+```{r, DBs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+DB3s <- medianDB_s[[3]]
+length(DB3s) <- length(medianDB_s[[2]])
+tableDBs <- data.frame(Patient = names(medianDB_s[[1]]),
+               Pre.OP = as.numeric(medianDB_s[[1]]),
+               Delta.1 = medianDB_s[[2]]-medianDB_s[[1]],
+               Post.1 = medianDB_s[[2]],
+               Delta.2 = DB3s-medianDB_s[[2]],
+               Post.2 = DB3s)
+stargazer(tableDBs, type="latex", summary = F, header = F, rownames = F,
+          title="DB values in nephrectomized kidneys")
+
+ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 5])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("DB [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median DB nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+###f
+
+Mean f values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanfh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanfh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fhtest[1], 2)`) and a subsequent increase to $`r signif(meanfh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fhtest[2], 2)`).
+
+```{r, fh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
+f3h <- medianf_h[[3]]
+length(f3h) <- length(medianf_h[[2]])
+tablefh <- data.frame(Patient = names(medianf_h[[1]]),
+               Pre.OP = as.numeric(medianf_h[[1]]),
+               Delta.1 = medianf_h[[2]]-medianf_h[[1]],
+               Post.1 = medianf_h[[2]],
+               Delta.2 = f3h-medianf_h[[2]],
+               Post.2 = f3h)
+stargazer(tablefh, type="latex", summary = F, header = F, rownames=F,
+          title="f values in non-nephrectomized kidneys")
+ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 6])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("f [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median f non-nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+
+```
+
+\newpage
+
+Mean f values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanfs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanfs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fstest[1], 2)`) and a subsequent increase to $`r signif(meanfs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fstest[2], 2)`).
+
+```{r, fs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+f3s <- medianf_s[[3]]
+length(f3s) <- length(medianf_s[[2]])
+tablefs <- data.frame(Patient = names(medianf_s[[1]]),
+               Pre.OP = as.numeric(medianf_s[[1]]),
+               Delta.1 = medianf_s[[2]]-medianf_s[[1]],
+               Post.1 = medianf_s[[2]],
+               Delta.2 = f3s-medianf_s[[2]],
+               Post.2 = f3s)
+stargazer(tablefs, type="latex", summary = F, header = F, rownames = F,
+          title="f values in nephrectomized kidneys")
+
+ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 6])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("f [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median f nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+###K
+
+Mean K values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanKh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanKh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Khtest[1], 2)`) and a subsequent increase to $`r signif(meanKh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Khtest[2], 2)`).
+
+```{r, Kh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
+K3h <- medianK_h[[3]]
+length(K3h) <- length(medianK_h[[2]])
+tableKh <- data.frame(Patient = names(medianK_h[[1]]),
+               Pre.OP = as.numeric(medianK_h[[1]]),
+               Delta.1 = medianK_h[[2]]-medianK_h[[1]],
+               Post.1 = medianK_h[[2]],
+               Delta.2 = K3h-medianK_h[[2]],
+               Post.2 = K3h)
+stargazer(tableKh, type="latex", summary = F, header = F, rownames=F,
+          title="K values in non-nephrectomized kidneys")
+ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 7])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("K [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median K non-nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+
+```
+
+\newpage
+
+Mean K values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanKs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanKs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Kstest[1], 2)`) and a subsequent increase to $`r signif(meanKs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Kstest[2], 2)`).
+
+```{r, Ks, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+K3s <- medianK_s[[3]]
+length(K3s) <- length(medianK_s[[2]])
+tableKs <- data.frame(Patient = names(medianK_s[[1]]),
+               Pre.OP = as.numeric(medianK_s[[1]]),
+               Delta.1 = medianK_s[[2]]-medianK_s[[1]],
+               Post.1 = medianK_s[[2]],
+               Delta.2 = K3s-medianK_s[[2]],
+               Post.2 = K3s)
+stargazer(tableKs, type="latex", summary = F, header = F, rownames = F,
+          title="K values in nephrectomized kidneys")
+
+ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 7])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("K [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median K nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+###FA
+
+Mean FA values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanFAh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanFAh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAhtest[1], 2)`) and a subsequent decrease to $`r signif(meanFAh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAhtest[2], 2)`).
+
+```{r, FAh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
+FA3h <- medianFA_h[[3]]
+length(FA3h) <- length(medianFA_h[[2]])
+tableFAh <- data.frame(Patient = names(medianFA_h[[1]]),
+               Pre.OP = as.numeric(medianFA_h[[1]]),
+               Delta.1 = medianFA_h[[2]]-medianFA_h[[1]],
+               Post.1 = medianFA_h[[2]],
+               Delta.2 = FA3h-medianFA_h[[2]],
+               Post.2 = FA3h)
+stargazer(tableFAh, type="latex", summary = F, header = F, rownames=F,
+          title="FA values in non-nephrectomized kidneys")
+ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 8])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("FA [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median FA non-nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+
+```
+
+\newpage
+
+Mean FA values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanFAs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanFAs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAstest[1], 2)`) and a subsequent increase to $`r signif(meanFAs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAstest[2], 2)`).
+
+```{r, FAs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+FA3s <- medianFA_s[[3]]
+length(FA3s) <- length(medianFA_s[[2]])
+tableFAs <- data.frame(Patient = names(medianFA_s[[1]]),
+               Pre.OP = as.numeric(medianFA_s[[1]]),
+               Delta.1 = medianFA_s[[2]]-medianFA_s[[1]],
+               Post.1 = medianFA_s[[2]],
+               Delta.2 = FA3s-medianFA_s[[2]],
+               Post.2 = FA3s)
+stargazer(tableFAs, type="latex", summary = F, header = F, rownames = F,
+          title="FA values in nephrectomized kidneys")
+
+ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 8])) +
+                scale_shape_identity() +
+                geom_boxplot(aes(fcolour = I("#3366FF"))) +
+                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+                ylab("FA [mm²/10³s]") + 
+                xlab("Measurement") +
+                ggtitle("Median FA nephrectomized") +
+                #theme(legend.position="none") +
+                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+                      legend.title=element_blank()) +
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+##Correlations
+
+```{r corfig, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, fig.cap="Correlation Matrix. X-ed out combinations did not show significant corelations."}
+corrplot.mixed(cor(cormat), p.mat = res1[[1]], sig.level = 0.05, lower = "ellipse", upper = "number")
+```
+
+
