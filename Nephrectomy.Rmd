@@ -1,15 +1,16 @@
 ---
 title: "Diffusion-weighted magnetic resonance imaging in partially nephrectomized kidneys"
 author: "Moritz Schneider"
-date: "Tuesday, February 03, 2015"
-geometry: margin=2cm
+date: "Tuesday, February 13, 2015"
+output:
+  pdf_document:
+    fig_caption: yes
+  word_document: default
 header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
 - \fancyhead[CO,CE]{DWI in partially nephrectomized kidneys}
-output: 
-        pdf_document:
-                fig_caption: yes
+geometry: margin=2cm
 ---
 ```{r, loadlibraries, echo=FALSE, message=FALSE}
 library("ggplot2")
@@ -213,7 +214,7 @@ median.table.s <- cbind(median.table.s, Condition = replicate(nrow(median.table.
 
 median.table <- rbind(median.table.h, median.table.s)
 
-cormat <- cbind(Kzeit = datalist$Klemmzeit,
+cormat <- cbind(Ctime = datalist$Klemmzeit,
                 D.ADC = deltaADC_s[[1]], 
                 D.DA = deltaDA_s[[1]], 
                 D.DB = deltaDB_s[[1]], 
@@ -242,6 +243,15 @@ res2 <- cor.mtest(cormat, 0.99)
 
 ```
 
+#Disclaimer
+
+A lot of statistical tests were performed for this analysis. To ensure a correct type I error rate of 0.05 a p-value correction will have to be applied, which may lead to some results becoming insignificant.
+
+#Summary
+
+The purpose of this study was to investigate the effects of partial nephrectomy in kidneys on quantitative parameters derived with diffusion weighted magnetic resonance imaging (DW-MRI). Patients were scanned prior, 1 week after (n=15) and 3 months (n=7) after the operation was performed. All parameters (apparent diffusion coefficient $ADC$, pseudodiffusion $D_{fast}$, perfusion fraction $f$, kurtosis $K$, fractional anisotropy $FA$) except for one (true tissue diffusivity $D$) showed significant reductions in the nephrectomized kidneys 1 week after the operation. The comparison of non-nephrectomized and nephrectomized kidneys showed significant differences for these parameters 1 week after nephrectomy as well. This leads to the conclusion, that careful and sophisticated analysis of DWI data has a high potential to asses kidney functionality.
+None of the observed parameters showed significant correlations with the duration of the clamping time during the nephrectomy. This may lead to the conclusion, that the duration does not play an important role as long as a critical duration is not reached (longest clamping time was 28 minutes).
+
 #Materials and Methods
 
 ##Overview of available Data
@@ -259,30 +269,42 @@ h = healthy, s = sick
 
 ###Fractional Anisotropy
 
-The pattern used for the diffusion gradient directions (passing through the vertices of a regular 14-sided polygon) allowed for a simplified calculation of the diffusion tensor as described by Basser et al.(1998). Prior to calculation the diffusion tensor elements, the DWI images were rigidly registered along the b-value dimension using a Fourier cross-correlation method to limit the effect of bulk-motion. Subsequently, images with matching diffusion gradients (number of averages = 2) were averaged and afterwards images were registered once more before calculating the tensor elements and the fractional anisotropy ($FA$): 
+The pattern used for the diffusion gradient directions (passing through the vertices of a regular 14-sided polygon) allowed for a simplified calculation of the diffusion tensor as described by Basser et al.(1998). Prior to calculating the diffusion tensor elements, the DWI images were rigidly registered along the b-value dimension using a Fourier cross-correlation method to limit the effects of bulk-motion on the paramter valures. Subsequently, images with matching diffusion gradients (number of averages = 2) were averaged and afterwards images were registered once more before calculating the tensor elements and the fractional anisotropy ($FA$): 
 
 $\text{FA} = \sqrt{\frac{1}{2}} \frac{\sqrt{(\lambda_1 - \lambda_2)^2 + (\lambda_2 - \lambda_3)^2 + (\lambda_3 - \lambda_1)^2}}{\sqrt{\lambda_1^2 + \lambda_2^2 + \lambda_3^2}}$ , with the tensor eigenvalues $\lambda_1, \lambda_2, \lambda_3$.
 
-The median value inside multi-slice (min. 3 slices) regions of interest encompassing the kidney cortex was then used as representative value for the fractional anisotropy. 
+The median value inside multi-slice (min. 3 slices) regions of interest encompassing each kidney cortex was then used as representative value for the fractional anisotropy. 
 
 ###ADC, IVIM and Kurtosis
-Trace-weighted images for each b-value were calculated using the registered DWI images and afterwards registered once more before using a monoexponential model $S(b) = S_0 \cdot e^{(─b \cdot ADC)}$ fit to calculate $ADCs$ and a segmented biexponential fitting approach[2] to calculate voxelwise IVIM parameters $S(b) = S_0 \cdot (f \cdot e^{(─ b \cdot (D_{slow} + D_{fast}))} + (1 ─ f) \cdot e^{(─ b \cdot D_{slow})})$; with tissue diffusion $D_{slow}$, perfusion induced pseudodiffusion $D_{fast}$ and the perfusion fraction $f$, representing the proportion of the initial signal intensity $S_0$ attributed to blood). The kurtosis paramter $K$ was estimated by fitting the Signal intensities to the kurtosis model : $S(b) = S_0 \cdot e^{(─b \cdot D_{k} + K/6 \cdot (b \cdot D_{K})^{2})}$. Analogous to the fractional anisotropy, median value inside multi-slice (min. 3 slices) regions of interest encompassing the kidney cortex was then used as representative value for each parameter, respectively. 
+Trace-weighted images for each b-value were calculated using the registered DWI images and afterwards registered once more before using a monoexponential model $S(b) = S_0 \cdot e^{(─b \cdot ADC)}$ least squares fit to calculate the $ADC$ and a segmented biexponential fitting approach to calculate voxelwise IVIM parameters $S(b) = S_0 \cdot (f \cdot e^{(─ b \cdot (D_{slow} + D_{fast}))} + (1 ─ f) \cdot e^{(─ b \cdot D_{slow})})$ (with tissue diffusion $D_{slow}$, perfusion induced pseudodiffusion $D_{fast}$ and the perfusion fraction $f$, representing the proportion of the initial signal intensity $S_0$ attributed to blood). The kurtosis parameter $K$ was estimated by fitting the Signal intensities to the kurtosis model : $S(b) = S_0 \cdot e^{(─b \cdot D_{k} + K/6 \cdot (b \cdot D_{K})^{2})}$. Analogous to the fractional anisotropy, the median value inside multi-slice (min. 3 slices) regions of interest encompassing each kidney cortex was then used as representative value for each parameter, respectively. 
 
 ###Statistical Analyses
 
 To compare parameters between baseline and follow-up measurement the paired Wilcoxon signed-rank test was used, to compare non-nephrectomized and partially nephrectomized kidneys the non-paired Mann-Whitney U test was used. P-values of less than 0.05 were considered statistically significant.
 
-Linear correlations were calculated between $ADC$, $f$, $FA$ and $Klemmzeit$. 
+To test whether the duration of "clamping time" of the kidney during the nephrectomy has a measurable effect on the parameters derived with DWI, we correlated the clamping time $Ctime$ with the observed changes between first and second measurement.
+
+###Noise
+
+Due to the rician noise distribution in magnitude MRI data, background noise has to be accounted for when calculating DWI parameters using least squares fitting. Low SNR in high b-value images usually leads to artificially reduced $ADC$ and $D$ values, whereas $f$ and $K$ are shifted to higher values. To reduce this bias, we defined a background noise region (e.g. on high b-value images), calculated the standard deviation $\sigma$ withing this region and then used the approximation by Gubjartsson ("The Rician Distribution of Noisy MRI Data", 1995): $S_{new} = \sqrt{|S_{old}^{2} - \sigma^{2}|}$.
 
 \newpage
 
 #Results
 
+In the chapter "Parameter Values" each quantitative Parameter is discussed individually (increases/decreases between measurements; comparison between nephrectomized and non-nephrectomized kidneys).
+
+In the chapter "Correlations" the parameters are investigated relating to linear correlations.
+
+\newpage
+
 ##Parameter Values
+
+When we talk about the "median $ADC$" or any other parameter in this chapter, we effectively talk about the mean of the median $ADC$ values (as described in M&M) of a specific group and measurement timepoint. 
 
 ###ADC
 
-Median ADC values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanADCh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanADCh[2], 3)` \frac{mm^2}{10^3s}$ ($p=`r signif(ADChtest[1], 2)`$) and a subsequent decrease to $`r signif(meanADCh[3], 3)` \frac{mm^2}{10^3s}$ ($p=`r signif(ADChtest[2], 2)`$).
+Median $ADC$ values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanADCh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanADCh[2], 3)` \frac{mm^2}{10^3s}$ ($p=`r signif(ADChtest[1], 2)`$) and a subsequent decrease to $`r signif(meanADCh[3], 3)` \frac{mm^2}{10^3s}$ ($p=`r signif(ADChtest[2], 2)`$).
 
 ```{r, adch, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
 ADC3h <- medianADC_h[[3]]
@@ -310,7 +332,7 @@ stargazer(tableADCh, type="latex", summary = F, header = F, rownames=F,
 
 ```
 
-Median ADC values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanADCs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanADCs[2], 3)` \frac{mm^2}{10^3s}$ ($p=`r signif(ADCstest[1], 2)`$) and subsequently remained constant ($`r signif(meanADCs[3], 3)` \frac{mm^2}{10^3s}$; $p=`r signif(ADCstest[2], 2)`$).
+Median $ADC$ values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanADCs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanADCs[2], 3)` \frac{mm^2}{10^3s}$ ($p=`r signif(ADCstest[1], 2)`$) and subsequently remained constant ($`r signif(meanADCs[3], 3)` \frac{mm^2}{10^3s}$; $p=`r signif(ADCstest[2], 2)`$).
 
 ```{r, adcs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 ADC3s <- medianADC_s[[3]]
@@ -341,9 +363,9 @@ stargazer(tableADCs, type="latex", summary = F, header = F, rownames = F,
 
 \newpage
 
-While the comparison of ADC values between nephrectomized and non-nephrectomized kidneys revealed no significant difference for the baseline measurement ($p = `r signif(ADCvstest[[1]], 2)`$), second and third measurements showed significantly higher median ADC in non-nephrectomized kidneys ($p = `r signif(ADCvstest[[2]], 2)`$ and $p = `r signif(ADCvstest[[2]], 2)`$).
+While the comparison of $ADC$ values between nephrectomized and non-nephrectomized kidneys revealed no significant difference for the baseline measurement ($p = `r signif(ADCvstest[[1]], 2)`$), second and third measurements showed significantly higher median $ADC$ in non-nephrectomized kidneys ($p = `r signif(ADCvstest[[2]], 2)`$ and $p = `r signif(ADCvstest[[3]], 2)`$).
 
-```{r, adcvs, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=6, fig.width=8}
+```{r, ADCvs, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=6, fig.width=8, fig.cap="Boxplots showing median ADC trends"}
 ggplot(median.table, aes(factor(Measurement), median.table[, 3])) +
                 scale_shape_identity() +
                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
@@ -361,9 +383,9 @@ ggplot(median.table, aes(factor(Measurement), median.table[, 3])) +
 
 \newpage
 
-###DA
+###$D_{slow}$
 
-Mean DA values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanDAh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDAh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAhtest[1], 2)`) and a subsequent decrease to $`r signif(meanDAh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAhtest[2], 2)`).
+Median $D_{slow}$ values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanDAh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDAh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAhtest[1], 2)`) and a subsequent decrease to $`r signif(meanDAh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAhtest[2], 2)`).
 
 ```{r, DAh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
 DA3h <- medianDA_h[[3]]
@@ -376,24 +398,22 @@ tableDAh <- data.frame(Patient = names(medianDA_h[[1]]),
                Post.2 = DA3h)
 stargazer(tableDAh, type="latex", summary = F, header = F, rownames = F,
           title="DA values in non-nephrectomized kidneys")
-ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 4])) +
-                scale_shape_identity() +
-                geom_boxplot(aes(fcolour = I("#3366FF"))) +
-                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
-                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
-                ylab("DA [mm²/10³s]") + 
-                xlab("Measurement") +
-                ggtitle("Median DA non-nephrectomized") +
-                #theme(legend.position="none") +
-                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
-                      legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+# ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 4])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("DA [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median DA non-nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
 
 ```
 
-\newpage
-
-Mean DA values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanDAs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDAs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAstest[1], 2)`) and a further subsequent decrease to $`r signif(meanDAs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAstest[2], 2)`).
+Median $D_{slow}$ values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanDAs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDAs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAstest[1], 2)`) and a further subsequent decrease to $`r signif(meanDAs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DAstest[2], 2)`).
 
 ```{r, DAs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 DA3s <- medianDA_s[[3]]
@@ -407,26 +427,46 @@ tableDAs <- data.frame(Patient = names(medianDA_s[[1]]),
 stargazer(tableDAs, type="latex", summary = F, header = F, rownames = F,
           title="DA values in nephrectomized kidneys")
 
-ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 4])) +
+# ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 4])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("DA [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median DA nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+The comparison of $D_{slow}$ values between nephrectomized and non-nephrectomized kidneys revealed no significant difference for any  measurement ($p = `r signif(DAvstest[[1]], 2)`$, $p = `r signif(DAvstest[[2]], 2)`$ and $p = `r signif(DAvstest[[3]], 2)`$).
+
+```{r, DAvs, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=6, fig.width=8, fig.cap="Boxplots showing median DA trends"}
+ggplot(median.table, aes(factor(Measurement), median.table[, 4])) +
                 scale_shape_identity() +
                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
                 ylab("DA [mm²/10³s]") + 
                 xlab("Measurement") +
-                ggtitle("Median DA nephrectomized") +
+                ggtitle("Median DA") +
                 #theme(legend.position="none") +
                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
                       legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
-
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table[,1])))))+
+                facet_grid(. ~ Condition)
 ```
 
 \newpage
 
-###DB
+###$D_{fast}$
 
-Mean DB values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanDBh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDBh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DBhtest[1], 2)`) and subsequently remained constant ($`r signif(meanDBh[3], 3)` \frac{mm^2}{10^3s}$; p=`r signif(DBhtest[2], 2)`).
+Median $D_{fast}$ values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanDBh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDBh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DBhtest[1], 2)`) and subsequently remained constant ($`r signif(meanDBh[3], 3)` \frac{mm^2}{10^3s}$; p=`r signif(DBhtest[2], 2)`).
 
 ```{r, DBh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
 DB3h <- medianDB_h[[3]]
@@ -439,24 +479,22 @@ tableDBh <- data.frame(Patient = names(medianDB_h[[1]]),
                Post.2 = DB3h)
 stargazer(tableDBh, type="latex", summary = F, header = F, rownames=F,
           title="DB values in non-nephrectomized kidneys")
-ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 5])) +
-                scale_shape_identity() +
-                geom_boxplot(aes(fcolour = I("#3366FF"))) +
-                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
-                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
-                ylab("DB [mm²/10³s]") + 
-                xlab("Measurement") +
-                ggtitle("Median DB non-nephrectomized") +
-                #theme(legend.position="none") +
-                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
-                      legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+# ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 5])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("DB [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median DB non-nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
 
 ```
 
-\newpage
-
-Mean DB values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanDBs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDBs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DBstest[1], 2)`) and subsequently remained constant ($`r signif(meanDBs[3], 3)` \frac{mm^2}{10^3s}$; p=`r signif(DBstest[2], 2)`).
+Median $D_{fast}$ values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanDBs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanDBs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(DBstest[1], 2)`) and subsequently remained constant ($`r signif(meanDBs[3], 3)` \frac{mm^2}{10^3s}$; p=`r signif(DBstest[2], 2)`).
 
 ```{r, DBs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 DB3s <- medianDB_s[[3]]
@@ -470,26 +508,46 @@ tableDBs <- data.frame(Patient = names(medianDB_s[[1]]),
 stargazer(tableDBs, type="latex", summary = F, header = F, rownames = F,
           title="DB values in nephrectomized kidneys")
 
-ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 5])) +
+# ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 5])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("DB [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median DB nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+While the comparison of $D_{fast}$ values between nephrectomized and non-nephrectomized kidneys revealed no significant difference for the baseline measurement ($p = `r signif(DBvstest[[1]], 2)`$), second and third measurements showed significantly higher median $D_{fast}$ in non-nephrectomized kidneys ($p = `r signif(DBvstest[[2]], 2)`$ and $p = `r signif(DBvstest[[3]], 2)`$).
+
+```{r, DBvs, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=6, fig.width=8, fig.cap="Boxplots showing median DB trends"}
+ggplot(median.table, aes(factor(Measurement), median.table[, 5])) +
                 scale_shape_identity() +
                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
                 ylab("DB [mm²/10³s]") + 
                 xlab("Measurement") +
-                ggtitle("Median DB nephrectomized") +
+                ggtitle("Median DB") +
                 #theme(legend.position="none") +
                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
                       legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
-
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table[,1])))))+
+                facet_grid(. ~ Condition)
 ```
 
 \newpage
 
 ###f
 
-Mean f values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanfh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanfh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fhtest[1], 2)`) and a subsequent increase to $`r signif(meanfh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fhtest[2], 2)`).
+Median $f$ values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanfh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanfh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fhtest[1], 2)`) and a subsequent increase to $`r signif(meanfh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fhtest[2], 2)`).
 
 ```{r, fh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
 f3h <- medianf_h[[3]]
@@ -502,24 +560,22 @@ tablefh <- data.frame(Patient = names(medianf_h[[1]]),
                Post.2 = f3h)
 stargazer(tablefh, type="latex", summary = F, header = F, rownames=F,
           title="f values in non-nephrectomized kidneys")
-ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 6])) +
-                scale_shape_identity() +
-                geom_boxplot(aes(fcolour = I("#3366FF"))) +
-                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
-                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
-                ylab("f [mm²/10³s]") + 
-                xlab("Measurement") +
-                ggtitle("Median f non-nephrectomized") +
-                #theme(legend.position="none") +
-                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
-                      legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+# ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 6])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("f [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median f non-nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
 
 ```
 
-\newpage
-
-Mean f values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanfs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanfs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fstest[1], 2)`) and a subsequent increase to $`r signif(meanfs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fstest[2], 2)`).
+Median $f$ values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanfs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanfs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fstest[1], 2)`) and a subsequent increase to $`r signif(meanfs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(fstest[2], 2)`).
 
 ```{r, fs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 f3s <- medianf_s[[3]]
@@ -533,26 +589,46 @@ tablefs <- data.frame(Patient = names(medianf_s[[1]]),
 stargazer(tablefs, type="latex", summary = F, header = F, rownames = F,
           title="f values in nephrectomized kidneys")
 
-ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 6])) +
+# ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 6])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("f [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median f nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+While the comparison of $f$ values between nephrectomized and non-nephrectomized kidneys revealed no significant difference for the baseline measurement ($p = `r signif(fvstest[[1]], 2)`$), second and third measurements showed significantly higher median $f$ in non-nephrectomized kidneys ($p = `r signif(fvstest[[2]], 2)`$ and $p = `r signif(fvstest[[3]], 2)`$).
+
+```{r, fvs, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=6, fig.width=8, fig.cap="Boxplots showing median Perfusion Fraction trends"}
+ggplot(median.table, aes(factor(Measurement), median.table[, 6])) +
                 scale_shape_identity() +
                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
-                ylab("f [mm²/10³s]") + 
+                ylab("f [%]") + 
                 xlab("Measurement") +
-                ggtitle("Median f nephrectomized") +
+                ggtitle("Median Perfusion Fraction") +
                 #theme(legend.position="none") +
                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
                       legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
-
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table[,1])))))+
+                facet_grid(. ~ Condition)
 ```
 
 \newpage
 
 ###K
 
-Mean K values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanKh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanKh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Khtest[1], 2)`) and a subsequent increase to $`r signif(meanKh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Khtest[2], 2)`).
+Median $K$ values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanKh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanKh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Khtest[1], 2)`) and a subsequent increase to $`r signif(meanKh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Khtest[2], 2)`).
 
 ```{r, Kh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
 K3h <- medianK_h[[3]]
@@ -565,24 +641,22 @@ tableKh <- data.frame(Patient = names(medianK_h[[1]]),
                Post.2 = K3h)
 stargazer(tableKh, type="latex", summary = F, header = F, rownames=F,
           title="K values in non-nephrectomized kidneys")
-ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 7])) +
-                scale_shape_identity() +
-                geom_boxplot(aes(fcolour = I("#3366FF"))) +
-                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
-                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
-                ylab("K [mm²/10³s]") + 
-                xlab("Measurement") +
-                ggtitle("Median K non-nephrectomized") +
-                #theme(legend.position="none") +
-                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
-                      legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+# ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 7])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("K [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median K non-nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
 
 ```
 
-\newpage
-
-Mean K values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanKs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanKs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Kstest[1], 2)`) and a subsequent increase to $`r signif(meanKs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Kstest[2], 2)`).
+Median $K$ values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanKs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanKs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Kstest[1], 2)`) and a subsequent increase to $`r signif(meanKs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(Kstest[2], 2)`).
 
 ```{r, Ks, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 K3s <- medianK_s[[3]]
@@ -595,27 +669,47 @@ tableKs <- data.frame(Patient = names(medianK_s[[1]]),
                Post.2 = K3s)
 stargazer(tableKs, type="latex", summary = F, header = F, rownames = F,
           title="K values in nephrectomized kidneys")
+# 
+# ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 7])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("K [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median K nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
 
-ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 7])) +
+```
+
+\newpage
+
+While the comparison of Kurtosis values between nephrectomized and non-nephrectomized kidneys revealed no significant difference for the baseline measurement ($p = `r signif(Kvstest[[1]], 2)`$), second and third measurements showed significantly higher median Kurtosis in non-nephrectomized kidneys ($p = `r signif(Kvstest[[2]], 2)`$ and $p = `r signif(Kvstest[[3]], 2)`$).
+
+```{r, Kvs, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=6, fig.width=8, fig.cap="Boxplots showing median Kurotsis trends"}
+ggplot(median.table, aes(factor(Measurement), median.table[, 7])) +
                 scale_shape_identity() +
                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
-                ylab("K [mm²/10³s]") + 
+                ylab("K [a.u.]") + 
                 xlab("Measurement") +
-                ggtitle("Median K nephrectomized") +
+                ggtitle("Median Kurtosis") +
                 #theme(legend.position="none") +
                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
                       legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
-
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table[,1])))))+
+                facet_grid(. ~ Condition)
 ```
 
 \newpage
 
 ###FA
 
-Mean FA values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanFAh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanFAh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAhtest[1], 2)`) and a subsequent decrease to $`r signif(meanFAh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAhtest[2], 2)`).
+Median $FA$ values in the non-nephrectomized kidneys showed an initial increase from $`r signif(meanFAh[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanFAh[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAhtest[1], 2)`) and a subsequent decrease to $`r signif(meanFAh[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAhtest[2], 2)`).
 
 ```{r, FAh, echo=FALSE, warning=FALSE, message=FALSE, fig.height=4, fig.align='center', results='asis'}
 FA3h <- medianFA_h[[3]]
@@ -628,24 +722,22 @@ tableFAh <- data.frame(Patient = names(medianFA_h[[1]]),
                Post.2 = FA3h)
 stargazer(tableFAh, type="latex", summary = F, header = F, rownames=F,
           title="FA values in non-nephrectomized kidneys")
-ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 8])) +
-                scale_shape_identity() +
-                geom_boxplot(aes(fcolour = I("#3366FF"))) +
-                geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
-                geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
-                ylab("FA [mm²/10³s]") + 
-                xlab("Measurement") +
-                ggtitle("Median FA non-nephrectomized") +
-                #theme(legend.position="none") +
-                theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
-                      legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
+# ggplot(median.table.h, aes(factor(Measurement), median.table.h[, 8])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("FA [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median FA non-nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.h[,1]))))) 
 
 ```
 
-\newpage
-
-Mean FA values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanFAs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanFAs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAstest[1], 2)`) and a subsequent increase to $`r signif(meanFAs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAstest[2], 2)`).
+Median $FA$ values in the nephrectomized kidneys showed an initial decrease from $`r signif(meanFAs[1], 3)` \frac{mm^2}{10^3s}$ to $`r signif(meanFAs[2], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAstest[1], 2)`) and a subsequent increase to $`r signif(meanFAs[3], 3)` \frac{mm^2}{10^3s}$ (p=`r signif(FAstest[2], 2)`).
 
 ```{r, FAs, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
 FA3s <- medianFA_s[[3]]
@@ -659,27 +751,68 @@ tableFAs <- data.frame(Patient = names(medianFA_s[[1]]),
 stargazer(tableFAs, type="latex", summary = F, header = F, rownames = F,
           title="FA values in nephrectomized kidneys")
 
-ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 8])) +
+# ggplot(median.table.s, aes(factor(Measurement), median.table.s[, 8])) +
+#                 scale_shape_identity() +
+#                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
+#                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
+#                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
+#                 ylab("FA [mm²/10³s]") + 
+#                 xlab("Measurement") +
+#                 ggtitle("Median FA nephrectomized") +
+#                 #theme(legend.position="none") +
+#                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
+#                       legend.title=element_blank()) +
+#                 guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
+
+```
+
+\newpage
+
+While the comparison of $FA$ values between nephrectomized and non-nephrectomized kidneys revealed no significant difference for the baseline measurement ($p = `r signif(FAvstest[[1]], 2)`$), second and third measurements showed significantly higher median $FA$ in non-nephrectomized kidneys ($p = `r signif(FAvstest[[2]], 2)`$ and $p = `r signif(FAvstest[[3]], 2)`$).
+
+```{r, FAvs, echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.height=6, fig.width=8, fig.cap="Boxplots showing median FA trends"}
+ggplot(median.table, aes(factor(Measurement), median.table[, 8])) +
                 scale_shape_identity() +
                 geom_boxplot(aes(fcolour = I("#3366FF"))) +
                 geom_point(aes(color = factor(Patient), shape = as.numeric(Patient)), size = 4) +
                 geom_line(aes(group = factor(Patient), color = factor(Patient)), alpha = 0.5) +
-                ylab("FA [mm²/10³s]") + 
+                ylab("FA [a.u.]") + 
                 xlab("Measurement") +
-                ggtitle("Median FA nephrectomized") +
+                ggtitle("Median Fractional Anisotropy") +
                 #theme(legend.position="none") +
                 theme(panel.background = element_rect(fill = "#CCCCCC", color = "#333333"),
                       legend.title=element_blank()) +
-                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table.s[,1])))))
-
+                guides(colour = guide_legend(override.aes = list(shape= 1:length(unique(median.table[,1])))))+
+                facet_grid(. ~ Condition)
 ```
 
 \newpage
 
 ##Correlations
 
-```{r corfig, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, fig.cap="Correlation Matrix. X-ed out combinations did not show significant corelations."}
+No significant correlations were found between any of the DWI-derived parameter and the duration of the clamping time.
+
+```{r corfigall, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, fig.cap="Correlation Matrix for nephrectomized kidneys. X-ed out combinations did not show significant corelations."}
 corrplot.mixed(cor(cormat), p.mat = res1[[1]], sig.level = 0.05, lower = "ellipse", upper = "number")
 ```
 
+\newpage
+
+#Conclusions
+
+All parameters (apparent diffusion coefficient $ADC$, pseudodiffusion $D_{fast}$, perfusion fraction $f$, kurtosis $K$, fractional anisotropy $FA$) except for one (true tissue diffusivity $D_{slow}$) showed significant reductions in the nephrectomized kidneys 1 week after the operation. 
+This is highly interesting, since this suggests that the observed reduction in the $ADC$ is not caused by a change in tissue diffusivity (which would lead to a reduction in $D_{slow}$) but by reduced blood volume and a reduction in blood velocity, according to the intravoxel incoherent motion theory by LeBihan. Reduced tissue perfusion in the kidneys following nephrectomy, indicates reduced kidney functionality. 
+
+Conversely, non-nephrectomized kidneys expressed a significant increase in most DWI parameters, namely $ADC$, $f$ and $FA$, this could be due to compensation for the nephrectomized kidneys.
+
+The comparison of non-nephrectomized and nephrectomized kidneys showed virtually no difference prior to the nephrectomy, which supports the validity of the baseline measurement. However, significant differences for all paramters except $D_{slow}$ were found for the second measurement 1 week after nephrectomy, emphasizing the dysfunctionality of the partial nephrectomized kidneys. 
+
+None of the observed parameters showed significant correlations with the duration of the clamping time during the nephrectomy. This may lead to the conclusion, that the duration does not play an important role as long as a critical duration is not reached (longest clamping time was 28 minutes), however, statistical power to test for correlations was low due to the relatively small sample size.
+
+#Open Questions
+
+* What kind of p-value adjustments should be performed (Bonferroni, etc...)
+* What is the benefit of including Kurtosis and Fractional Anisotropy? (Inclusion leads to more statistical tests and may lead to confusion)
+* Is a DCE correlation necessary? If so, which DCE results should be used?
+* What is the use of the third timepoint?
 
