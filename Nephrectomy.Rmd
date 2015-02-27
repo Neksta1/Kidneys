@@ -816,3 +816,50 @@ None of the observed parameters showed significant correlations with the duratio
 * Is a DCE correlation necessary? If so, which DCE results should be used?
 * What is the use of the third timepoint?
 
+#Regression Analysis
+
+##Effect of operation on parameter changes
+
+Suggested model: change in parameter ~ (nephrectomized <-> non-nephrectomized) + (clamping time)
+
+```{r, reg1}
+ls.table.ADC <- rbind(cbind(tableADCh, stat = 0, ctime = 0),
+                      cbind(tableADCs, stat=1, ctime = datalist[,8]))
+ls.table.DA <- rbind(cbind(tableDAh, stat = 0, ctime = 0),
+                      cbind(tableDAs, stat=1, ctime = datalist[,8]))
+ls.table.DB <- rbind(cbind(tableDBh, stat = 0, ctime = 0),
+                      cbind(tableDBs, stat=1, ctime = datalist[,8]))
+ls.table.f <- rbind(cbind(tablefh, stat = 0, ctime = 0),
+                      cbind(tablefs, stat=1, ctime = datalist[,8]))
+ADC.fit <- lm(Delta.1 ~ stat, ls.table.ADC)
+plot(ls.table.ADC$stat,ls.table.ADC$Delta.1)
+abline(ADC.fit)
+
+DA.fit <- lm(Delta.1 ~ stat, ls.table.DA)
+plot(ls.table.DA$stat,ls.table.DA$Delta.1)
+abline(DA.fit)
+
+f.fit <- lm(Delta.1 ~ stat, ls.table.f)
+plot(ls.table.f$stat,ls.table.f$Delta.1)
+abline(f.fit)
+
+```
+
+Connection ADC - IVIM: change in ADC ~ change in D + change in D* + change in f
+
+```{r, reg2}
+test.fit <- lm(deltaADC_s[[1]] ~ deltaDA_s[[1]] + deltaDB_s[[1]] + deltaf_s[[1]])
+```
+
+Compensation: change in healthy ~ change in sick
+
+```{r, reg3}
+
+test.fit.ADC <- lm(tableADCh[tableADCh$Patient != "Schmidt", 3] ~ 
+                       tableADCs[tableADCs$Patient != "Schmidt", 3])
+test.fit.f <- lm(tablefh[tablefh$Patient != "Schmidt", 3] ~ 
+                       tablefs[tablefs$Patient != "Schmidt", 3])
+```
+
+
+
